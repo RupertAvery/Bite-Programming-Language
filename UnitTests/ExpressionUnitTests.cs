@@ -1,8 +1,12 @@
+#define USE_NEW_PARSER
+
 using Bite.Parser;
 using Bite.Runtime;
 using Bite.Runtime.CodeGen;
 using Bite.Runtime.Memory;
 using Xunit;
+
+
 
 namespace UnitTests
 {
@@ -12,12 +16,16 @@ namespace UnitTests
 
         private BiteResult ExecExpression(string expression)
         {
+#if USE_NEW_PARSER
+            var compiler = new BITECompiler();
+#else
             var compiler = new Compiler(true);
+#endif
             var program = compiler.CompileExpression(expression);
             return program.Run();
         }
 
-        #region Arithmetic Tests
+#region Arithmetic Tests
 
         [Fact]
         public void ArithmeticAddNumbers()
@@ -107,9 +115,9 @@ namespace UnitTests
             Assert.Equal(14, result.ReturnValue.NumberData);
         }
 
-        #endregion
+#endregion
 
-        #region Logical Tests
+#region Logical Tests
 
         [Fact]
         public void LogicalAnd()
@@ -177,9 +185,9 @@ namespace UnitTests
             }
         }
 
-        #endregion
+#endregion
 
-        #region Bitwise Tests
+#region Bitwise Tests
 
 
         [Fact]
@@ -230,9 +238,9 @@ namespace UnitTests
             Assert.Equal(-128, result.ReturnValue.NumberData);
         }
 
-        #endregion
+#endregion
 
-        #region Unary Operator Tests
+#region Unary Operator Tests
 
         [Fact]
         public void Negate()
@@ -242,9 +250,9 @@ namespace UnitTests
             Assert.Equal(-127, result.ReturnValue.NumberData);
         }
 
-        #endregion
+#endregion
 
-        #region Comparison Tests
+#region Comparison Tests
 
         [Fact]
         public void Equal()
@@ -359,7 +367,8 @@ namespace UnitTests
             }
         }
 
-        #endregion
+#endregion
+
 
     }
 }

@@ -1468,7 +1468,7 @@ public partial class BiteModuleParser
                 if ( context.Failed )
                     return Context < ForStatementNode >.AsFailed( context.Exception );
 
-                forStatementNode.Expression1 = context.Result;
+                forStatementNode.Condition = context.Result;
 
                 if ( !match( BiteLexer.SemicolonSeperator, out matchContext ) )
                     return matchContext;
@@ -1492,7 +1492,7 @@ public partial class BiteModuleParser
                 if ( context.Failed )
                     return Context < ForStatementNode >.AsFailed( context.Exception );
 
-                forStatementNode.Expression2 = context.Result;
+                forStatementNode.Iterator = context.Result;
             }
 
 
@@ -1844,7 +1844,7 @@ public partial class BiteModuleParser
             if ( contextBlock.Failed )
                 return Context < IfStatementNode >.AsFailed( context.Exception );
 
-            ifStatement.ThenBlock = contextBlock.Result;
+            ifStatement.ThenStatement = contextBlock.Result;
 
             ifStatement.IfStatementEntries = new List < IfStatementEntry >();
 

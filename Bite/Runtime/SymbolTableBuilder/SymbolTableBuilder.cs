@@ -639,6 +639,34 @@ namespace Bite.Runtime.SymbolTable
             return null;
         }
 
+        public override object Visit(LocalVariableDeclarationNode node)
+        {
+            node.AstScopeNode = CurrentScope;
+
+            if (node.Expression != null)
+            {
+                Resolve(node.Expression);
+            }
+
+            bool declaredPublicOrPrivate = node.Modifiers.Modifiers != null &&
+                                           node.Modifiers.Modifiers.Contains(
+                                               ModifiersNode.ModifierTypes.DeclarePublic);
+
+            bool isStatic = node.Modifiers.Modifiers != null &&
+                            node.Modifiers.Modifiers.Contains(ModifiersNode.ModifierTypes.DeclareStatic);
+
+            DynamicVariable variableSymbol = new DynamicVariable(
+                node.VarId.Id,
+                declaredPublicOrPrivate ? AccesModifierType.Public : AccesModifierType.Private,
+                isStatic ? ClassAndMemberModifiers.Static : ClassAndMemberModifiers.None);
+
+            variableSymbol.Type = new BiteClassType("Object");
+            variableSymbol.DefinitionNode = node;
+            CurrentScope.define(variableSymbol);
+
+            return null;
+        }
+
         public override object Visit(VariableDeclarationNode node)
         {
             node.AstScopeNode = CurrentScope;
@@ -916,8 +944,14 @@ namespace Bite.Runtime.SymbolTable
         {
             node.AstScopeNode = CurrentScope;
             Resolve(node.Expression);
-            Resolve(node.ThenBlock);
+            Resolve(node.ThenStatement);
 
+            if (node.ElseStatement != null)
+            {
+                Resolve(node.ElseStatement);
+            }
+
+            // TODO: Remove
             if ( node.IfStatementEntries != null )
             {
                 foreach (IfStatementEntry nodeIfStatementEntry in node.IfStatementEntries)
@@ -941,7 +975,23 @@ namespace Bite.Runtime.SymbolTable
             LocalScope l = new LocalScope( CurrentScope );
             CurrentScope.nest( l );
             pushScope( l );
-            
+
+
+            if (node.Initializer != null)
+            {
+                if (node.Initializer.Expressions != null)
+                {
+                    foreach (var expression in node.Initializer.Expressions)
+                    {
+                        Resolve(expression);
+                    }
+                }
+                else if (node.Initializer.VariableDeclaration != null)
+                {
+                    Resolve(node.Initializer.VariableDeclaration);
+                }
+            }
+
             if (node.VariableDeclaration != null)
             {
                 Resolve(node.VariableDeclaration);
@@ -954,18 +1004,36 @@ namespace Bite.Runtime.SymbolTable
                 }
             }
 
-            if (node.Expression1 != null)
+            if (node.Condition != null)
             {
-                Resolve(node.Expression1);
+                Resolve(node.Condition);
             }
 
-            Resolve(node.Block);
-            if (node.Expression2 != null)
+            if (node.Iterators != null)
             {
-                Resolve(node.Expression2);
+                foreach (var iterator in node.Iterators)
+                {
+                    Resolve(iterator);
+                }
             }
 
-            
+            if (node.Statement != null)
+            {
+                Resolve(node.Statement);
+            }
+
+            if (node.Iterator != null)
+            {
+                Resolve(node.Iterator);
+            }
+
+            if (node.Block != null)
+            {
+                Resolve(node.Block);
+            }
+
+
+
             popScope();
             return null;
         }
@@ -1080,6 +1148,9 @@ namespace Bite.Runtime.SymbolTable
 
                 case FunctionDeclarationNode functionDeclarationNode:
                     return Visit(functionDeclarationNode);
+
+                case LocalVariableDeclarationNode localVariable:
+                    return Visit(localVariable);
 
                 case VariableDeclarationNode variable:
                     return Visit(variable);

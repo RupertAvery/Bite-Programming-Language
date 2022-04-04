@@ -102,6 +102,7 @@ classInstanceDeclaration        : (privateModifier|publicModifier)? (staticModif
                                 | Identifier AssignOperator DeclareClassInstance Identifier(DotOperator Identifier)* OpeningRoundBracket arguments? ClosingRoundBracket SemicolonSeperator;
 variableDeclaration             : (privateModifier|publicModifier)? (staticModifier)? DeclareVariable Identifier (( AssignOperator exprStatement )? | SemicolonSeperator );
    
+statements  :declaration ( declaration )*;
 
 statement   :exprStatement
             |forStatement
@@ -112,21 +113,29 @@ statement   :exprStatement
             |whileStatement
             |block ;  
             
-exprStatement       :expression SemicolonSeperator ;
+exprStatement       : expression SemicolonSeperator ;
 
-forStatement        :DeclareForLoop OpeningRoundBracket (expression | variableDeclaration( CommaSeperator expression| variableDeclaration)*)?  
-                     SemicolonSeperator (expression( CommaSeperator expression)*)?  
-                     SemicolonSeperator (expression( CommaSeperator expression)*)? 
-                     ClosingRoundBracket block ;
+localVarInitializer : DeclareVariable Identifier (( AssignOperator expression )? ) ;
+
+forInitializer      : localVarInitializer 
+                    | expression ( CommaSeperator expression )*;
+
+forIterator         : expression ( CommaSeperator expression )* ;
+
+forStatement        :DeclareForLoop OpeningRoundBracket ( forInitializer )?  
+                     SemicolonSeperator ( condition = expression )?  
+                     SemicolonSeperator ( forIterator )? 
+                     ClosingRoundBracket ( statement )? ;
                      
-ifStatement         :ControlFlowIf OpeningRoundBracket expression ClosingRoundBracket block
-                     ( (ControlFlowElse ControlFlowIf|ControlFlowElse) block )* ;
+ifStatement         :ControlFlowIf OpeningRoundBracket expression ClosingRoundBracket trueStatement = statement
+                    ( ControlFlowElse falseStatement = statement )?  ;
                      
 returnStatement     :FunctionReturn expression? SemicolonSeperator ;
 breakStatement      :Break SemicolonSeperator;
 usingStatement      :UsingDirective OpeningRoundBracket expression ClosingRoundBracket block;
 whileStatement      :DeclareWhileLoop OpeningRoundBracket expression ClosingRoundBracket block ;
 block               :OpeningCurlyBracket declaration* ClosingCurlyBracket ;
+
 
 expression     :assignment;
 

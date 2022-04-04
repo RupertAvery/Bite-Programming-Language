@@ -6,7 +6,10 @@ namespace Bite.Ast
     public class IfStatementNode : StatementNode
     {
         public ExpressionNode Expression;
-        public BlockStatementNode ThenBlock;
+        public StatementNode ThenStatement;
+        public StatementNode ElseStatement;
+        
+        // Old Parser
         public List<IfStatementEntry> IfStatementEntries;
         #region Public
 

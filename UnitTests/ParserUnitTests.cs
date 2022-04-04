@@ -1,3 +1,5 @@
+#define USE_NEW_PARSER
+
 using System;
 using System.IO;
 using Bite.Ast;

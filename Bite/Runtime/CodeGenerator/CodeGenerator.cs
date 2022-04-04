@@ -450,6 +450,19 @@ namespace Bite.Runtime.CodeGen
             return null;
         }
 
+        public override object Visit(LocalVariableDeclarationNode node)
+        {
+            int d = 0;
+
+            DynamicVariable variableSymbol = node.AstScopeNode.resolve(node.VarId.Id, out int moduleId, ref d) as DynamicVariable;
+
+            Compile(node.Expression);
+            EmitByteCode(BiteVmOpCodes.OpDefineLocalVar);
+            EmitByteCode(BiteVmOpCodes.OpNone, new ConstantValue(variableSymbol.Name));
+
+            return null;
+        }
+
         public override object Visit(VariableDeclarationNode node)
         {
             int d = 0;
@@ -1056,10 +1069,18 @@ namespace Bite.Runtime.CodeGen
         {
             Compile(node.Expression);
             int thenJump = EmitByteCode(BiteVmOpCodes.OpNone, 0, 0);
-            Compile(node.ThenBlock);
+            Compile(node.ThenStatement);
             int overElseJump = EmitByteCode(BiteVmOpCodes.OpNone, 0, 0);
             m_BiteProgram.CurrentChunk.Code[thenJump] = new ByteCode(BiteVmOpCodes.OpJumpIfFalse, m_BiteProgram.CurrentChunk.SerializeToBytes().Length);
+            
             Stack < int > endJumpStack = new Stack < int >();
+
+            if (node.ElseStatement != null)
+            {
+                Compile(node.ElseStatement);
+            }
+
+            // TODO: Remove
 
             if ( node.IfStatementEntries != null )
             {
@@ -1107,6 +1128,23 @@ namespace Bite.Runtime.CodeGen
             EmitByteCode(BiteVmOpCodes.OpEnterBlock, (node.AstScopeNode as BaseScope).NestedSymbolCount, 0);
             m_CurrentEnterBlockCount++;
             PreviousLoopBlockCount = m_CurrentEnterBlockCount;
+
+            if (node.Initializer != null)
+            {
+                if (node.Initializer.Expressions != null)
+                {
+                    foreach (var expression in node.Initializer.Expressions)
+                    {
+                        Compile(expression);
+                    }
+                }
+                else if (node.Initializer.VariableDeclaration != null)
+                {
+                    Compile(node.Initializer.VariableDeclaration);
+                }
+            }
+
+
             if (node.VariableDeclaration != null)
             {
                 Compile(node.VariableDeclaration);
@@ -1117,9 +1155,9 @@ namespace Bite.Runtime.CodeGen
             }
 
             int jumpCodeWhileBegin = m_BiteProgram.CurrentChunk.SerializeToBytes().Length;
-            if (node.Expression1 != null)
+            if (node.Condition != null)
             {
-                Compile(node.Expression1);
+                Compile(node.Condition);
             }
             else
             {
@@ -1127,18 +1165,36 @@ namespace Bite.Runtime.CodeGen
             }
             
             int toFix = EmitByteCode(BiteVmOpCodes.OpWhileLoop, jumpCodeWhileBegin, 0, 0);
-            Compile(node.Block);
-            if (node.Expression2 != null)
+
+            if (node.Statement != null)
             {
-                Compile(node.Expression2);
+                Compile(node.Statement);
             }
 
-            
+            if (node.Block != null)
+            {
+                Compile(node.Block);
+            }
+
+            if (node.Iterators != null)
+            {
+                foreach (var iterator in node.Iterators)
+                {
+                    Compile(iterator);
+                }
+            }
+
+            if (node.Iterator != null)
+            {
+                Compile(node.Iterator);
+            }
+
             m_BiteProgram.CurrentChunk.Code[toFix] = new ByteCode(BiteVmOpCodes.OpWhileLoop, jumpCodeWhileBegin, m_BiteProgram.CurrentChunk.SerializeToBytes().Length);
             EmitByteCode(BiteVmOpCodes.OpNone, 0, 0);
             EmitByteCode(BiteVmOpCodes.OpNone, 0, 0);
             EmitByteCode(BiteVmOpCodes.OpExitBlock, 0);
             m_CurrentEnterBlockCount--;
+
             return null;
         }
 
@@ -1433,6 +1489,9 @@ namespace Bite.Runtime.CodeGen
 
                 case FunctionDeclarationNode functionDeclarationNode:
                     return Visit(functionDeclarationNode);
+
+                case LocalVariableDeclarationNode localVar:
+                    return Visit(localVar);
 
                 case VariableDeclarationNode variable:
                     return Visit(variable);

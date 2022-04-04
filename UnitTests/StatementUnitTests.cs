@@ -1,3 +1,5 @@
+#define USE_NEW_PARSER
+
 using Bite.Parser;
 using Bite.Runtime;
 using Bite.Runtime.CodeGen;
@@ -11,7 +13,11 @@ namespace UnitTests
 
         private BiteResult ExecStatements(string statements)
         {
+#if USE_NEW_PARSER
+            var compiler = new BITECompiler();
+#else
             var compiler = new Compiler(true);
+#endif
             var program = compiler.CompileStatements(statements);
             return program.Run();
         }
@@ -136,7 +142,7 @@ namespace UnitTests
         {
             var result = ExecStatements("var a = 7; a++;");
             Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
-            Assert.Equal(8, result.ReturnValue.NumberData);
+            Assert.Equal(7, result.ReturnValue.NumberData);
         }
 
         [Fact]
@@ -144,7 +150,7 @@ namespace UnitTests
         {
             var result = ExecStatements("var a = 7; a--;");
             Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
-            Assert.Equal(6, result.ReturnValue.NumberData);
+            Assert.Equal(7, result.ReturnValue.NumberData);
         }
 
 
@@ -314,6 +320,14 @@ namespace UnitTests
             var result = ExecStatements("var j = 0; for (var i = 0; i < 10; i++) { j++; if (j == 6) { break; } } j;");
             Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
             Assert.Equal(6, result.ReturnValue.NumberData);
+        }
+
+        [Fact]
+        public void ForEverInitLoopBreak()
+        {
+            var result = ExecStatements("for (var i = 0;;) { i++; if (i == 10) { break; } } i;");
+            Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
+            Assert.Equal(10, result.ReturnValue.NumberData);
         }
 
         [Fact]

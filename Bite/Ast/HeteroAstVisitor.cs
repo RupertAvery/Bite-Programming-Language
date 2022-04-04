@@ -21,6 +21,8 @@ namespace Bite.Ast
 
         public abstract T Visit(FunctionDeclarationNode node);
 
+        public abstract T Visit(LocalVariableDeclarationNode node);
+
         public abstract T Visit(VariableDeclarationNode node);
 
         public abstract T Visit(ClassInstanceDeclarationNode node);

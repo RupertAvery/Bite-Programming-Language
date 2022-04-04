@@ -5,7 +5,8 @@ namespace Bite.Ast
 
     public abstract class HeteroAstNode 
     {
-        public Scope AstScopeNode;
+        public Scope AstScopeNode { get; set; }
+
         public DebugInfo DebugInfoAstNode = new DebugInfo();
 
         #region Public
