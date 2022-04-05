@@ -117,6 +117,12 @@ public interface IBITEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExprStatement([NotNull] BITEParser.ExprStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="BITEParser.localVarDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLocalVarDeclaration([NotNull] BITEParser.LocalVarDeclarationContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="BITEParser.localVarInitializer"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -217,6 +217,13 @@ namespace MemoizeSharp
                     assignmentNode.PrimaryNode = primaryNode;
                 }
 
+
+                if (node is TernaryOperationNode ternaryOperationNode)
+                {
+                    assignmentNode.Type = AssignmentTypes.Ternary;
+                    assignmentNode.Ternary = ternaryOperationNode;
+                }
+
                 return assignmentNode;
             }
 
@@ -930,19 +937,20 @@ namespace MemoizeSharp
             }
         }
 
-        public override HeteroAstNode VisitLocalVarInitializer(BITEParser.LocalVarInitializerContext context)
+        public override HeteroAstNode VisitLocalVarDeclaration(BITEParser.LocalVarDeclarationContext context)
         {
-            LocalVariableDeclarationNode variableDeclarationNode = new LocalVariableDeclarationNode();
-            variableDeclarationNode.VarId = new Identifier(context.Identifier().Symbol.Text);
-            variableDeclarationNode.DebugInfoAstNode.LineNumberStart = context.Start.Line;
-            variableDeclarationNode.DebugInfoAstNode.LineNumberEnd = context.Stop.Line;
+            LocalVariableDeclarationNode localVariableDeclarationNode = new LocalVariableDeclarationNode();
 
-            variableDeclarationNode.DebugInfoAstNode.ColumnNumberStart = context.Start.Column;
-            variableDeclarationNode.DebugInfoAstNode.ColumnNumberEnd = context.Stop.Column;
+            localVariableDeclarationNode.VarId = new Identifier(context.Identifier().Symbol.Text);
+            localVariableDeclarationNode.DebugInfoAstNode.LineNumberStart = context.Start.Line;
+            localVariableDeclarationNode.DebugInfoAstNode.LineNumberEnd = context.Stop.Line;
+
+            localVariableDeclarationNode.DebugInfoAstNode.ColumnNumberStart = context.Start.Column;
+            localVariableDeclarationNode.DebugInfoAstNode.ColumnNumberEnd = context.Stop.Column;
 
             if (context.expression() != null)
             {
-                variableDeclarationNode.Expression =
+                localVariableDeclarationNode.Expression =
                     (ExpressionNode)VisitExpression(context.expression());
             }
 
@@ -953,9 +961,29 @@ namespace MemoizeSharp
             accessToken.type = BiteLexer.DeclarePrivate;
 
             ModifiersNode Modifiers = new ModifiersNode(accessToken, abstractStaticMod);
-            variableDeclarationNode.Modifiers = Modifiers;
+            localVariableDeclarationNode.Modifiers = Modifiers;
 
-            return variableDeclarationNode;
+            return localVariableDeclarationNode;
+        }
+
+        public override HeteroAstNode VisitLocalVarInitializer(BITEParser.LocalVarInitializerContext context)
+        {
+            LocalVariableInitializerNode localVariableInitializerNode = new LocalVariableInitializerNode();
+
+            var variableDeclarationNodes = new List<LocalVariableDeclarationNode>();
+
+            var localVarDeclarations = context.localVarDeclaration();
+            if (localVarDeclarations != null)
+            {
+                foreach (var localVarDeclarationContext in context.localVarDeclaration())
+                {
+                    variableDeclarationNodes.Add((LocalVariableDeclarationNode)VisitLocalVarDeclaration(localVarDeclarationContext));
+                }
+            }
+            
+            localVariableInitializerNode.VariableDeclarations = variableDeclarationNodes;
+
+            return localVariableInitializerNode;
         }
         
 
@@ -979,8 +1007,8 @@ namespace MemoizeSharp
 
             if (localVarInitializer != null)
             {
-                forInitializerNode.VariableDeclaration =
-                    (LocalVariableDeclarationNode)VisitLocalVarInitializer(localVarInitializer);
+                forInitializerNode.LocalVariableInitializer =
+                    (LocalVariableInitializerNode)VisitLocalVarInitializer(localVarInitializer);
             }
 
             return forInitializerNode;
@@ -1835,6 +1863,11 @@ namespace MemoizeSharp
                     if (context.MinusMinusOperator() != null)
                     {
                         unaryOperationNode.Operator = UnaryPrefixOperation.UnaryPrefixOperatorType.MinusMinus;
+                    }
+
+                    if (context.ComplimentOperator() != null)
+                    {
+                        unaryOperationNode.Operator = UnaryPrefixOperation.UnaryPrefixOperatorType.Compliment;
                     }
 
                     return unaryOperationNode;

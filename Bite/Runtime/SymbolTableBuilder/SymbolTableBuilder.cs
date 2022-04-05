@@ -639,6 +639,16 @@ namespace Bite.Runtime.SymbolTable
             return null;
         }
 
+        public override object Visit(LocalVariableInitializerNode node)
+        {
+            foreach (var variableDeclaration in node.VariableDeclarations)
+            {
+                Resolve(variableDeclaration);
+            }
+
+            return null;
+        }
+
         public override object Visit(LocalVariableDeclarationNode node)
         {
             node.AstScopeNode = CurrentScope;
@@ -986,9 +996,9 @@ namespace Bite.Runtime.SymbolTable
                         Resolve(expression);
                     }
                 }
-                else if (node.Initializer.VariableDeclaration != null)
+                else if (node.Initializer.LocalVariableInitializer != null)
                 {
-                    Resolve(node.Initializer.VariableDeclaration);
+                    Resolve(node.Initializer.LocalVariableInitializer);
                 }
             }
 
@@ -1148,6 +1158,9 @@ namespace Bite.Runtime.SymbolTable
 
                 case FunctionDeclarationNode functionDeclarationNode:
                     return Visit(functionDeclarationNode);
+
+                case LocalVariableInitializerNode initializer:
+                    return Visit(initializer);
 
                 case LocalVariableDeclarationNode localVariable:
                     return Visit(localVariable);

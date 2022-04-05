@@ -295,12 +295,18 @@ namespace UnitTests
 
 
         #region Loop Tests
-
+        [Fact]
+        public void ForLoopScope()
+        {
+            var result = ExecStatements("var j = 0; for (var i = 0; i < 10; i++) { j++; i++; } j;");
+            Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
+            Assert.Equal(10, result.ReturnValue.NumberData);
+        }
 
         [Fact]
         public void ForLoop()
         {
-            var result = ExecStatements("var j = 0; for (var i = 0; i < 10; i++) { j++; } j;");
+            var result = ExecStatements("var j = 0; for (var i = 0; i < 10; i++) { j++;  } j;");
             Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
             Assert.Equal(10, result.ReturnValue.NumberData);
         }
@@ -337,6 +343,15 @@ namespace UnitTests
             Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
             Assert.Equal(10, result.ReturnValue.NumberData);
         }
+
+        [Fact]
+        public void ForMultipleVarAndIterator()
+        {
+            var result = ExecStatements("var a = 0; for (var i = 0, j = 0; i < 10; i++, j++ ) { a += j + i; } a;");
+            Assert.Equal(BiteVmInterpretResult.InterpretOk, result.InterpretResult);
+            Assert.Equal(90, result.ReturnValue.NumberData);
+        }
+
 
         [Fact]
         public void WhileLoop()

@@ -450,6 +450,16 @@ namespace Bite.Runtime.CodeGen
             return null;
         }
 
+        public override object Visit(LocalVariableInitializerNode node)
+        {
+            foreach (var variableDeclaration in node.VariableDeclarations)
+            {
+                Compile(variableDeclaration);
+            }
+
+            return null;
+        }
+
         public override object Visit(LocalVariableDeclarationNode node)
         {
             int d = 0;
@@ -1138,9 +1148,9 @@ namespace Bite.Runtime.CodeGen
                         Compile(expression);
                     }
                 }
-                else if (node.Initializer.VariableDeclaration != null)
+                else if (node.Initializer.LocalVariableInitializer != null)
                 {
-                    Compile(node.Initializer.VariableDeclaration);
+                    Compile(node.Initializer.LocalVariableInitializer);
                 }
             }
 
@@ -1489,6 +1499,9 @@ namespace Bite.Runtime.CodeGen
 
                 case FunctionDeclarationNode functionDeclarationNode:
                     return Visit(functionDeclarationNode);
+
+                case LocalVariableInitializerNode initializerNode:
+                    return Visit(initializerNode);
 
                 case LocalVariableDeclarationNode localVar:
                     return Visit(localVar);
