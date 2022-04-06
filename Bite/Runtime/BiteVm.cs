@@ -351,8 +351,20 @@ public class BiteVm
 
                     case BiteVmOpCodes.OpCallFunction:
                     {
-                        string method = ReadConstant().StringConstantValue;
-                        DynamicBiteVariable call = m_CurrentMemorySpace.Get( method );
+                        DynamicBiteVariable call = null;
+                        var currentStack = m_VmStack.Peek();
+                                
+                        // TODO: Temporary hack to try to call a function dynamically
+                        if ( currentStack.ObjectData is BiteChunkWrapper )
+                        {
+                            call = m_VmStack.Pop();
+                            m_CurrentMemorySpace = m_VmStack.Pop().ObjectData as FastMemorySpace;
+                        }
+                        else
+                        {
+                            string method = ReadConstant().StringConstantValue;
+                            call = m_CurrentMemorySpace.Get( method );
+                        }
 
                         if ( call.ObjectData is BiteChunkWrapper function )
                         {
@@ -2915,7 +2927,17 @@ public class BiteVm
 
                         //SetElement = true;
                         FastMemorySpace fastMemorySpace = m_VmStack.Pop().ObjectData as FastMemorySpace;
-                        m_VmStack.Push( fastMemorySpace.Get( m_LastElement ) );
+
+                        var member = fastMemorySpace.Get( m_LastElement );
+
+                        // TODO: Fix
+                        // This pushes the memoryspace onto the stack so we can use it on OpCall
+                        if ( member.ObjectData is BiteChunkWrapper )
+                        {
+                            m_VmStack.Push( DynamicVariableExtension.ToDynamicVariable( fastMemorySpace ) );
+                        }
+
+                        m_VmStack.Push( member );
 
                         break;
                     }
